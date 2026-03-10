@@ -503,11 +503,14 @@ footer {
   </div>
 </section>
 
+
 <!-- PREDICTION CARDS -->
 <section id="predictSection">
   <div class="sec-label">AI Analysis</div>
   <h2>Traffic Forecast</h2>
   <p class="sec-sub">AI-predicted conditions for your selected route and departure time.</p>
+
+  <p class="sec-sub" id="mlLine" style="font-size:0.8rem; display:none;"> </p>
   <div id="aiTipBox"></div>
   <div class="cards-grid">
     <div class="pcard">
@@ -688,254 +691,159 @@ footer {
 </div>
 
 <script>
-// ════════════════════════════════════════════════════════
-// URBAN NAV — Frontend Engine
-// Calls backend at /api/* (proxied through same origin)
-// Falls back to local smart model if backend unreachable
-// ════════════════════════════════════════════════════════
 
-const API = 'http://localhost:3001'; // change to '' when served from backend
-const trafficData = [1,1,1,1,2,4,7,9,10,8,5,4,5,5,6,7,9,10,9,7,5,4,3,2];
-const hourLabels  = ['12a','1a','2a','3a','4a','5a','6a','7a','8a','9a','10a','11a',
-                     '12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'];
+const API = "http://localhost:3001";
 
-// ── GEOCODE ──────────────────────────────────────────────
-async function geocode(place) {
-  try {
-    const r = await fetch(`${API}/api/geocode?q=${encodeURIComponent(place)}`, { signal: AbortSignal.timeout(6000) });
-    if (r.ok) return await r.json();
-  } catch(e) {}
-  // Direct fallback (CORS ok from browser for Nominatim)
-  const r2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`,
-    { headers: { 'Accept-Language': 'en' } });
-  const d = await r2.json();
-  if (!d.length) throw new Error(`"${place}" not found. Try a city name like "Mumbai" or "London".`);
-  return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), name: d[0].display_name };
+async function geocode(place){
+  const r = await fetch(`${API}/api/geocode?q=${encodeURIComponent(place)}`);
+  return await r.json();
 }
 
-// ── ROUTE via OSRM ────────────────────────────────────────
-async function getRoute(s, d) {
-  try {
-    const r = await fetch(`${API}/api/route?srcLat=${s.lat}&srcLon=${s.lon}&dstLat=${d.lat}&dstLon=${d.lon}`,
-      { signal: AbortSignal.timeout(6000) });
-    if (r.ok) return await r.json();
-  } catch(e) {}
-  // Direct OSRM fallback
-  const r2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${s.lon},${s.lat};${d.lon},${d.lat}?overview=false`);
-  const data = await r2.json();
-  if (data.code !== 'Ok') throw new Error('Could not calculate route between these cities.');
-  return {
-    distanceKm:  parseFloat((data.routes[0].distance/1000).toFixed(1)),
-    durationMin: Math.round(data.routes[0].duration/60)
-  };
+async function getRoute(s,d){
+  const r = await fetch(`${API}/api/route?srcLat=${s.lat}&srcLon=${s.lon}&dstLat=${d.lat}&dstLon=${d.lon}`);
+  return await r.json();
 }
 
-// ── AI ANALYSIS ───────────────────────────────────────────
-async function getAnalysis(src, dst, distKm, baseMins, hour, dayName) {
-  try {
-    const r = await fetch(`${API}/api/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ src, dst, distKm, baseMins, hour, dayName }),
-      signal: AbortSignal.timeout(10000)
-    });
-    if (r.ok) return await r.json();
-  } catch(e) {}
-  return localModel(src, dst, distKm, baseMins, hour);
-}
-
-// ── LOCAL FALLBACK MODEL ──────────────────────────────────
-function localModel(src, dst, distKm, baseMins, hour) {
-  const c = trafficData[hour];
-  const isPeak  = (hour>=7&&hour<=10)||(hour>=16&&hour<=20);
-  const isNight = hour<5||hour>22;
-  let lvl, emoji, pct;
-  if      (isNight)  { lvl='Low';      emoji='🟢'; pct=0.03; }
-  else if (!isPeak)  { lvl='Moderate'; emoji='🟡'; pct=0.20; }
-  else if (c>=9)     { lvl='Severe';   emoji='🚨'; pct=0.65; }
-  else               { lvl='High';     emoji='🔴'; pct=0.40; }
-
-  const delay = Math.round(baseMins*pct);
-  let bh = hour; for(let h=hour+1;h<24;h++) if(trafficData[h]<5){bh=h;break;}
-  if(bh===hour) bh=11;
-  const bLabel = `${bh%12||12}:00 ${bh<12?'AM':'PM'}`;
-  const park = Math.max(12,Math.min(88, isNight?82:isPeak?32:64));
-
-  const s1 = src.split(',')[0], d1 = dst.split(',')[0];
-  return {
-    trafficLevel: lvl, trafficEmoji: emoji,
-    delayMinutes: delay, totalTravelMinutes: baseMins+delay,
-    bestDepartureLabel: bLabel, timeSavedMinutes: Math.max(0,delay-3),
-    parkingAvailability: park,
-    parkingStatus: park>55?'High':park>30?'Medium':'Low',
-    congestionReason: isPeak
-      ? `Rush hour traffic on main corridors between ${s1} and ${d1}.`
-      : isNight ? `Late-night free flow — minimal congestion expected.`
-      : `Moderate midday flow on arterial roads.`,
-    aiTip: `Departing at ${bLabel} could save ~${Math.max(0,delay-3)} minutes on this route.`,
-    peakHours: '7–10 AM & 4–8 PM',
-    lowTrafficWindow: '11 AM – 2 PM',
-    mostCongestedSegment: `Main highway near ${d1} city entry`,
-    avgCongestionIndex: ((c*0.75)+1.5).toFixed(1)
-  };
-}
-
-// ── HAVERSINE ─────────────────────────────────────────────
-function hvkm(a,b,c,d){
-  const R=6371,dLat=(c-a)*Math.PI/180,dLon=(d-b)*Math.PI/180;
-  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
-  return (R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))).toFixed(0);
-}
-
-// ── MAIN PREDICT ──────────────────────────────────────────
-async function predict() {
-  const src  = document.getElementById('srcInput').value.trim();
-  const dst  = document.getElementById('dstInput').value.trim();
-  const dept = document.getElementById('deptTime').value;
-  const btn  = document.getElementById('goBtn');
-  if (!src||!dst) { toast('Missing fields','Enter both a source and destination city.'); return; }
-
-  btn.disabled = true; btn.textContent = 'Locating cities…';
-
-  try {
-    // 1. Geocode
-    const [sC, dC] = await Promise.all([geocode(src), geocode(dst)]);
-    btn.textContent = 'Calculating route…';
-
-    // 2. Route
-    const route = await getRoute(sC, dC);
-    btn.textContent = 'Running AI analysis…';
-
-    // 3. AI
-    const hour    = dept ? new Date(dept).getHours() : new Date().getHours();
-    const dayName = new Date().toLocaleDateString('en-US',{weekday:'long'});
-    const ai      = await getAnalysis(src, dst, route.distanceKm, route.durationMin, hour, dayName);
-
-    // 4. Render
-    renderAll(src, dst, sC, dC, route, ai);
-    btn.textContent = 'Update Route';
-    toast('Route ready', `${route.distanceKm} km · ${ai.totalTravelMinutes} min with traffic`);
-  } catch(e) {
-    btn.textContent = 'Get Route & Forecast';
-    toast('Error', e.message||'Something went wrong.');
-  }
-  btn.disabled = false;
-}
-
-// ── RENDER ────────────────────────────────────────────────
-function renderAll(src, dst, sC, dC, route, ai) {
-  const tColors = {Low:'var(--sage)',Moderate:'var(--amber)',High:'var(--red)',Severe:'#a00'};
-  const tc = tColors[ai.trafficLevel]||'var(--amber)';
-
-  // Banner
-  const straight = hvkm(sC.lat,sC.lon,dC.lat,dC.lon);
-  set('bDist',  `${route.distanceKm} km`);
-  set('bDistNote', `${straight} km straight-line`);
-  set('bBase',  `${route.durationMin} min`);
-  set('bTraffic', `${ai.totalTravelMinutes} min`);
-  set('bDelay', `+${ai.delayMinutes} min traffic delay`);
-  set('bSpeed', `${Math.round(route.distanceKm/(ai.totalTravelMinutes/60))} km/h`);
-  document.getElementById('bTraffic').style.color = tc;
-  document.getElementById('resultBanner').style.display = 'block';
-
-  // Prediction cards
-  setVal('cTraffic',  `${ai.trafficEmoji} ${ai.trafficLevel}`, tc);
-  setVal('cDepart',   ai.bestDepartureLabel, 'var(--sage)');
-  setVal('cTime',     `${ai.totalTravelMinutes} min`, 'var(--sky)');
-  setVal('cParking',  `${ai.parkingAvailability}%`,
-    ai.parkingAvailability>55?'var(--sage)':ai.parkingAvailability>30?'var(--amber)':'var(--red)');
-
-  set('cTrafficSub',  ai.congestionReason.substring(0,60)+'…');
-  set('cDepartSub',   `Save ~${ai.timeSavedMinutes} min vs now`);
-  set('cTimeSub',     `${route.durationMin} base + ${ai.delayMinutes} min delay · ${route.distanceKm} km`);
-  set('cParkingSub',  `${ai.parkingStatus} near ${dst.split(',')[0]}`);
-
-  const tpct = {Low:18,Moderate:52,High:80,Severe:96}[ai.trafficLevel]||52;
-  setTimeout(()=>{
-    setW('pTraffic', tpct);
-    setW('pDepart',  Math.min(90, ai.timeSavedMinutes*3+40));
-    setW('pTime',    Math.min(90, (route.durationMin/(route.durationMin+60))*100+25));
-    setW('pParking', ai.parkingAvailability);
-  }, 100);
-
-  // AI tip
-  const tip = document.getElementById('aiTipBox');
-  tip.textContent = '💡 ' + ai.aiTip;
-  tip.style.display = 'block';
-
-  // Insights
-  set('iPeak', ai.peakHours);
-  set('iLow',  ai.lowTrafficWindow);
-  set('iSeg',  ai.mostCongestedSegment);
-  set('iSegNote', '+' + ai.delayMinutes + ' min delay');
-  set('iAvg',  ai.avgCongestionIndex + ' / 10');
-
-  // Parking (adjust based on AI result)
-  const p = ai.parkingAvailability;
-  const p1=Math.min(90,p+14), p2=Math.min(80,p-6), p3=Math.max(10,p-28);
-  set('pk1Num', p1+'%'); setW('pk1Bar', p1, 'pk1Bar');
-  set('pk2Num', p2+'%'); setW('pk2Bar', p2, 'pk2Bar');
-  set('pk3Num', p3+'%'); setW('pk3Bar', p3, 'pk3Bar');
-
-  // Map
-  const mapBox = document.getElementById('mapBox');
-  mapBox.innerHTML = `<iframe
-    src="https://maps.google.com/maps?saddr=${encodeURIComponent(src)}&daddr=${encodeURIComponent(dst)}&output=embed&t=m"
-    width="100%" height="100%" style="border:0;border-radius:12px;"
-    allowfullscreen loading="lazy"></iframe>`;
-
-  document.getElementById('mapSection').scrollIntoView({behavior:'smooth',block:'start'});
-  buildChart(new Date().getHours());
-}
-
-// ── HELPERS ───────────────────────────────────────────────
-function set(id, v)  { const e=document.getElementById(id); if(e) e.textContent=v; }
-function setW(id, w) { const e=document.getElementById(id); if(e) e.style.width=w+'%'; }
-function setVal(id, v, color) {
-  const e = document.getElementById(id);
-  if (!e) return;
-  e.style.opacity='0'; e.style.transform='translateY(6px)';
-  setTimeout(()=>{
-    e.textContent=v; e.style.color=color||'';
-    e.style.opacity='1'; e.style.transform='translateY(0)';
-    e.style.transition='opacity 0.3s,transform 0.3s,color 0.3s';
-  },150);
-}
-function toast(title, sub) {
-  set('toast-title', title); set('toast-sub', sub);
-  const t = document.getElementById('toast');
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 4000);
-}
-
-// ── BAR CHART ─────────────────────────────────────────────
-function barColor(v) {
-  if(v>=8) return 'var(--red)';
-  if(v>=5) return 'var(--amber)';
-  return 'var(--sage)';
-}
-function buildChart(nowH) {
-  const chart = document.getElementById('barChart');
-  chart.innerHTML='';
-  trafficData.forEach((v,i)=>{
-    const pct=(v/10)*100, isNow=i===nowH;
-    const col=document.createElement('div');
-    col.className='bcol';
-    col.innerHTML=`<div class="bbar" data-v="${v}" style="height:${pct}%;background:${barColor(v)};opacity:${isNow?1:0.55};${isNow?'outline:2px solid var(--ink);outline-offset:2px;':''}"></div><div class="btime" style="font-weight:${isNow?700:400};color:${isNow?'var(--ink)':''}">${hourLabels[i]}</div>`;
-    chart.appendChild(col);
+async function getAnalysis(src,dst,distKm,baseMins,hour,dayName){
+  const r = await fetch(`${API}/api/analyze`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({src,dst,distKm,baseMins,hour,dayName})
   });
+  return await r.json();
 }
 
-// ── INIT ──────────────────────────────────────────────────
-function initTime() {
-  const n=new Date(); n.setMinutes(0,0,0); n.setHours(n.getHours()+1);
-  document.getElementById('deptTime').value=n.toISOString().slice(0,16);
+async function getMlPrediction(hour,dayIndex,distance){
+  const r = await fetch(`${API}/predict-traffic?hour=${hour}&day=${dayIndex}&distance=${distance}`);
+
+  if(!r.ok){
+    throw new Error("ML prediction failed");
+  }
+
+  return await r.json();
 }
-document.querySelectorAll('#srcInput,#dstInput').forEach(el=>
-  el.addEventListener('keydown', e=>{ if(e.key==='Enter') predict(); })
-);
-buildChart(new Date().getHours());
+
+
+async function predict(){
+
+  const src=document.getElementById("srcInput").value.trim();
+  const dst=document.getElementById("dstInput").value.trim();
+  const dept=document.getElementById("deptTime").value;
+  const btn=document.getElementById("goBtn");
+
+  if(!src || !dst){
+    alert("Enter both locations");
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent="Processing...";
+
+  try{
+
+    const [sC,dC] = await Promise.all([
+      geocode(src),
+      geocode(dst)
+    ]);
+
+    const route = await getRoute(sC,dC);
+
+    const dt = dept ? new Date(dept) : new Date();
+    const hour = dt.getHours();
+    const dayName = dt.toLocaleDateString("en-US",{weekday:"long"});
+    const jsDay = dt.getDay();
+    const dayIdx = jsDay===0 ? 7 : jsDay;
+
+    const [ai,ml] = await Promise.all([
+      getAnalysis(src,dst,route.distanceKm,route.durationMin,hour,dayName),
+      getMlPrediction(hour,dayIdx,route.distanceKm)
+    ]);
+
+    renderAll(src,dst,sC,dC,route,ai);
+
+    /* ===== ML RESULT DISPLAY ===== */
+
+    if(ml && ml.traffic_prediction){
+
+      const prediction = parseInt(ml.traffic_prediction);
+
+      let level="Low";
+
+      if(prediction>4000) level="High";
+      else if(prediction>2000) level="Moderate";
+
+      const mlLine=document.getElementById("mlLine");
+
+      mlLine.innerHTML =
+      "Machine Learning Model: Random Forest (scikit-learn)<br>" +
+      "Predicted Vehicle Count: <b>"+prediction+"</b><br>" +
+      "Estimated Traffic Level: <b>"+level+"</b>";
+
+      mlLine.style.display="block";
+
+    }
+
+    btn.textContent="Update Route";
+
+  }
+  catch(e){
+
+    console.error(e);
+    alert("Error running route prediction. Check backend.");
+
+    btn.textContent="Get Route & Forecast";
+
+  }
+
+  btn.disabled=false;
+}
+
+
+
+function renderAll(src,dst,sC,dC,route,ai){
+
+  document.getElementById("bDist").innerText = route.distanceKm+" km";
+  document.getElementById("bBase").innerText = route.durationMin+" min";
+  document.getElementById("bTraffic").innerText = ai.totalTravelMinutes+" min";
+  document.getElementById("bDelay").innerText = "+"+ai.delayMinutes+" min delay";
+
+  document.getElementById("cTraffic").innerText = ai.trafficEmoji+" "+ai.trafficLevel;
+  document.getElementById("cDepart").innerText = ai.bestDepartureLabel;
+  document.getElementById("cTime").innerText = ai.totalTravelMinutes+" min";
+  document.getElementById("cParking").innerText = ai.parkingAvailability+"%";
+
+  document.getElementById("cTrafficSub").innerText = ai.congestionReason;
+  document.getElementById("cDepartSub").innerText = "Save "+ai.timeSavedMinutes+" min";
+  document.getElementById("cTimeSub").innerText = "Including delay";
+  document.getElementById("cParkingSub").innerText = ai.parkingStatus;
+
+  document.getElementById("aiTipBox").innerText = "💡 "+ai.aiTip;
+  document.getElementById("aiTipBox").style.display="block";
+
+  document.getElementById("iPeak").innerText = ai.peakHours;
+  document.getElementById("iLow").innerText = ai.lowTrafficWindow;
+  document.getElementById("iSeg").innerText = ai.mostCongestedSegment;
+  document.getElementById("iAvg").innerText = ai.avgCongestionIndex;
+
+  const mapBox=document.getElementById("mapBox");
+
+  mapBox.innerHTML = `<iframe
+  src="https://maps.google.com/maps?saddr=${encodeURIComponent(src)}&daddr=${encodeURIComponent(dst)}&output=embed"
+  width="100%" height="100%" style="border:0"></iframe>`;
+
+}
+
+
+
+function initTime(){
+  const n = new Date();
+  n.setMinutes(0,0,0);
+  n.setHours(n.getHours()+1);
+  document.getElementById("deptTime").value = n.toISOString().slice(0,16);
+}
+
 initTime();
+
 </script>
 </body>
 </html>
