@@ -19,12 +19,17 @@ app.get("/predict-traffic", (req, res) => {
   const hour = req.query.hour;
   const day = req.query.day;
   const distance = req.query.distance;
+  const src = req.query.src || "Unknown";
+  const dst = req.query.dst || "Unknown";
 
-  if(!hour || !day || !distance){
-    return res.status(400).json({error:"Missing parameters"});
+  if (!hour || !day || !distance) {
+    return res.status(400).json({ error: "Missing parameters" });
   }
 
-  exec(`cd ml_model && python3 predict_traffic.py ${hour} ${day} ${distance}`, (error, stdout, stderr) => {
+  // Use 'python' instead of 'python3' for Windows compatibility
+  const cmd = `cd ml_model && python predict_lstm.py ${hour} ${day} ${distance} "${src}" "${dst}"`;
+  console.log("Running python command:", cmd);
+  exec(cmd, (error, stdout, stderr) => {
 
     if (error) {
       console.error("❌ ML MODEL ERROR:", error);
@@ -33,7 +38,7 @@ app.get("/predict-traffic", (req, res) => {
     }
 
     res.json({
-      model: "Random Forest (scikit-learn)",
+      model: "LSTM Neural Network (Kaggle Traffic Dataset & Keras)",
       traffic_prediction: stdout.trim()
     });
 
@@ -112,7 +117,7 @@ app.post("/api/analyze", async (req, res) => {
 
   const { src, dst, distKm, baseMins, hour, dayName } = req.body;
 
-  const trafficData = [1,1,1,1,2,4,7,9,10,8,5,4,5,5,6,7,9,10,9,7,5,4,3,2];
+  const trafficData = [1, 1, 1, 1, 2, 4, 7, 9, 10, 8, 5, 4, 5, 5, 6, 7, 9, 10, 9, 7, 5, 4, 3, 2];
   const congIdx = trafficData[hour] || 5;
 
   const prompt = `You are an AI urban mobility analyst. Analyze this real driving route and return JSON only.

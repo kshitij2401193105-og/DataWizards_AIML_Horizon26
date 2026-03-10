@@ -1,849 +1,1432 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Urban Nav — Smart City Navigation</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-
-:root {
-  --sand:   #f5f0e8;
-  --warm:   #ede8de;
-  --cream:  #faf8f4;
-  --stone:  #c8bfb0;
-  --bark:   #7a6a58;
-  --ink:    #2a2420;
-  --rust:   #c0562a;
-  --sage:   #4a7c6a;
-  --sky:    #2d6fa4;
-  --amber:  #c08030;
-  --red:    #c04040;
-  --r:      12px;
-}
-
-body {
-  font-family: 'Outfit', sans-serif;
-  background: var(--cream);
-  color: var(--ink);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-/* ── NAV ── */
-nav {
-  position: sticky; top: 0; z-index: 50;
-  background: var(--cream);
-  border-bottom: 1px solid var(--stone);
-  padding: 0 6%;
-  height: 60px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.logo {
-  font-family: 'Fraunces', serif;
-  font-weight: 700; font-size: 1.15rem;
-  color: var(--ink); text-decoration: none;
-  display: flex; align-items: center; gap: 9px;
-}
-.logo-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--rust); flex-shrink: 0;
-}
-.nav-links { display: flex; gap: 2rem; list-style: none; }
-.nav-links a {
-  font-size: 0.875rem; color: var(--bark);
-  text-decoration: none; font-weight: 500;
-  transition: color 0.2s;
-}
-.nav-links a:hover { color: var(--ink); }
-.nav-pill {
-  background: var(--ink); color: var(--cream) !important;
-  padding: 6px 16px; border-radius: 100px;
-  font-size: 0.8rem !important;
-  transition: background 0.2s !important;
-}
-.nav-pill:hover { background: var(--rust) !important; }
-
-/* ── HERO ── */
-.hero {
-  padding: 70px 6% 60px;
-  display: grid; grid-template-columns: 1fr 420px;
-  gap: 5rem; align-items: center;
-  background: var(--cream);
-}
-.hero-tag {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--rust);
-  margin-bottom: 1.2rem;
-}
-.hero-tag::before {
-  content: '';
-  width: 24px; height: 2px; background: var(--rust);
-}
-h1 {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(2rem, 3.5vw, 3rem);
-  font-weight: 700; line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-h1 em { font-style: italic; color: var(--rust); }
-.hero-desc {
-  margin: 1.2rem 0 0;
-  color: var(--bark); font-size: 0.95rem;
-  max-width: 440px; line-height: 1.7;
-}
-.hero-stats {
-  display: flex; gap: 2.5rem; margin-top: 2.5rem;
-}
-.stat-item { line-height: 1.2; }
-.stat-num {
-  font-family: 'Fraunces', serif;
-  font-size: 1.6rem; font-weight: 700; color: var(--ink);
-}
-.stat-label { font-size: 0.75rem; color: var(--bark); }
-
-/* ── FORM CARD ── */
-.form-card {
-  background: var(--sand);
-  border: 1px solid var(--stone);
-  border-radius: var(--r);
-  padding: 2rem;
-}
-.form-card h3 {
-  font-family: 'Fraunces', serif;
-  font-size: 1.1rem; font-weight: 500;
-  margin-bottom: 1.4rem; color: var(--ink);
-}
-.field { margin-bottom: 1rem; }
-.field label {
-  display: block; font-size: 0.72rem; font-weight: 600;
-  letter-spacing: 0.07em; text-transform: uppercase;
-  color: var(--bark); margin-bottom: 5px;
-}
-.field-wrap { position: relative; }
-.field-icon {
-  position: absolute; left: 12px; top: 50%;
-  transform: translateY(-50%); font-size: 14px; pointer-events: none;
-}
-.field input {
-  width: 100%; padding: 11px 12px 11px 36px;
-  background: var(--cream); border: 1px solid var(--stone);
-  border-radius: 8px; font-family: 'Outfit', sans-serif;
-  font-size: 0.88rem; color: var(--ink); outline: none;
-  transition: border-color 0.2s;
-}
-.field input:focus { border-color: var(--bark); }
-.field input::placeholder { color: var(--stone); }
-.btn-go {
-  width: 100%; margin-top: 0.4rem;
-  padding: 13px; background: var(--ink); color: var(--cream);
-  border: none; border-radius: 8px;
-  font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; transition: background 0.2s;
-}
-.btn-go:hover { background: var(--rust); }
-.btn-go:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* ── SECTION COMMONS ── */
-section { padding: 70px 6%; }
-.sec-label {
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--rust);
-  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
-}
-.sec-label::before { content: ''; width: 20px; height: 2px; background: var(--rust); }
-h2 {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
-  font-weight: 700; letter-spacing: -0.02em;
-  color: var(--ink); margin-bottom: 0.4rem;
-}
-.sec-sub { color: var(--bark); font-size: 0.9rem; margin-bottom: 2.5rem; }
-
-/* ── RESULT BANNER ── */
-#resultBanner {
-  display: none;
-  background: var(--sand); border: 1px solid var(--stone);
-  border-radius: var(--r); padding: 1.5rem 2rem;
-  margin-bottom: 1.5rem;
-}
-.banner-grid {
-  display: flex; flex-wrap: wrap; gap: 2.5rem; align-items: center;
-}
-.banner-item { line-height: 1.2; }
-.banner-val {
-  font-family: 'Fraunces', serif;
-  font-size: 1.7rem; font-weight: 700; color: var(--ink);
-}
-.banner-lbl { font-size: 0.72rem; color: var(--bark); text-transform: uppercase; letter-spacing: 0.06em; }
-.banner-note { font-size: 0.75rem; color: var(--stone); margin-top: 1px; }
-.banner-divider { width: 1px; height: 44px; background: var(--stone); }
-
-/* ── MAP ── */
-#mapSection { background: var(--warm); }
-.map-box {
-  border-radius: var(--r); overflow: hidden;
-  border: 1px solid var(--stone);
-  height: 420px; background: var(--sand);
-  display: flex; align-items: center; justify-content: center;
-}
-.map-placeholder {
-  text-align: center; color: var(--stone);
-}
-.map-placeholder svg { display: block; margin: 0 auto 12px; opacity: 0.4; }
-.map-placeholder p { font-size: 0.85rem; }
-
-/* ── PREDICTION CARDS ── */
-#predictSection { background: var(--cream); }
-.cards-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-}
-.pcard {
-  background: var(--sand); border: 1px solid var(--stone);
-  border-radius: var(--r); padding: 1.4rem;
-  transition: box-shadow 0.2s;
-}
-.pcard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-.pcard-icon { font-size: 1.4rem; margin-bottom: 0.8rem; }
-.pcard-label {
-  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.07em; color: var(--bark); margin-bottom: 4px;
-}
-.pcard-value {
-  font-family: 'Fraunces', serif;
-  font-size: 1.6rem; font-weight: 700; line-height: 1;
-  color: var(--ink); margin-bottom: 3px;
-  transition: color 0.3s;
-}
-.pcard-sub { font-size: 0.75rem; color: var(--bark); }
-.pbar { height: 3px; background: var(--stone); border-radius: 3px; margin-top: 0.8rem; overflow: hidden; }
-.pbar-fill { height: 100%; border-radius: 3px; width: 0; transition: width 1s ease; }
-
-/* ── PARKING ── */
-#parkingSection { background: var(--warm); }
-.parking-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
-.pspot {
-  background: var(--cream); border: 1px solid var(--stone);
-  border-radius: var(--r); padding: 1.4rem;
-  transition: box-shadow 0.2s;
-}
-.pspot:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
-.pspot-header {
-  display: flex; justify-content: space-between;
-  align-items: flex-start; margin-bottom: 1rem;
-}
-.pspot-name { font-weight: 600; font-size: 0.95rem; color: var(--ink); }
-.pspot-type { font-size: 0.72rem; color: var(--bark); margin-top: 2px; }
-.badge {
-  font-size: 0.68rem; font-weight: 600; padding: 3px 9px;
-  border-radius: 100px; letter-spacing: 0.04em; white-space: nowrap;
-}
-.badge-g { background: #e4f0ea; color: var(--sage); }
-.badge-y { background: #f5ecd8; color: var(--amber); }
-.badge-r { background: #f5e0e0; color: var(--red); }
-.avail-num {
-  font-family: 'Fraunces', serif;
-  font-size: 1.5rem; font-weight: 700; color: var(--ink);
-}
-.avail-bar { height: 4px; background: var(--stone); border-radius: 4px; margin: 6px 0 10px; overflow: hidden; }
-.avail-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
-.avail-g { background: var(--sage); }
-.avail-y { background: var(--amber); }
-.avail-r { background: var(--red); }
-.pspot-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
-.pspot-meta span { font-size: 0.75rem; color: var(--bark); }
-
-/* ── INSIGHTS ── */
-#insightsSection { background: var(--cream); }
-.insights-layout { display: grid; grid-template-columns: 1fr 1.4fr; gap: 2rem; }
-.insight-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.iitem {
-  background: var(--sand); border: 1px solid var(--stone);
-  border-radius: var(--r); padding: 1.1rem 1.3rem;
-  display: flex; gap: 1rem; align-items: center;
-  transition: box-shadow 0.2s;
-}
-.iitem:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.06); }
-.iitem-icon {
-  width: 40px; height: 40px; border-radius: 8px;
-  background: var(--warm); border: 1px solid var(--stone);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; flex-shrink: 0;
-}
-.iitem-label { font-size: 0.7rem; color: var(--bark); text-transform: uppercase; letter-spacing: 0.06em; }
-.iitem-val { font-weight: 600; font-size: 0.95rem; color: var(--ink); margin-top: 1px; }
-.iitem-right { margin-left: auto; font-size: 0.72rem; color: var(--bark); text-align: right; white-space: nowrap; }
-
-/* Chart */
-.chart-box {
-  background: var(--sand); border: 1px solid var(--stone);
-  border-radius: var(--r); padding: 1.5rem;
-}
-.chart-title {
-  font-family: 'Fraunces', serif;
-  font-size: 0.95rem; font-weight: 500;
-  margin-bottom: 1.2rem; color: var(--ink);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.chart-title span { font-family: 'Outfit', sans-serif; font-size: 0.72rem; color: var(--bark); font-weight: 400; }
-.bar-chart { display: flex; align-items: flex-end; gap: 5px; height: 120px; }
-.bcol { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
-.bbar {
-  width: 100%; border-radius: 3px 3px 0 0;
-  transition: opacity 0.2s; cursor: pointer; position: relative;
-}
-.bbar:hover { opacity: 1 !important; }
-.btime { font-size: 0.58rem; color: var(--bark); }
-.chart-legend { display: flex; gap: 1.2rem; margin-top: 0.8rem; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--bark); }
-.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
-
-/* AI Tip */
-#aiTipBox {
-  display: none; margin: 0 0 0;
-  background: #f0f5f0; border: 1px solid #c8d8c8;
-  border-left: 3px solid var(--sage);
-  border-radius: var(--r); padding: 1rem 1.3rem;
-  font-size: 0.875rem; color: #3a5a4a; line-height: 1.6;
-  margin-bottom: 2rem;
-}
-
-/* ── FOOTER ── */
-footer {
-  background: var(--ink); color: var(--sand);
-  padding: 60px 6% 30px;
-}
-.footer-grid {
-  display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr;
-  gap: 3rem; margin-bottom: 3rem;
-}
-.footer-logo {
-  font-family: 'Fraunces', serif; font-size: 1.1rem;
-  color: var(--cream); margin-bottom: 0.8rem;
-  display: flex; align-items: center; gap: 8px;
-}
-.footer-logo .logo-dot { background: var(--rust); }
-.footer-desc { font-size: 0.82rem; color: rgba(245,240,232,0.55); line-height: 1.7; max-width: 260px; }
-.footer-col h4 {
-  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(245,240,232,0.4);
-  margin-bottom: 0.9rem;
-}
-.footer-col ul { list-style: none; }
-.footer-col li { margin-bottom: 0.5rem; }
-.footer-col a {
-  font-size: 0.82rem; color: rgba(245,240,232,0.6);
-  text-decoration: none; transition: color 0.2s;
-}
-.footer-col a:hover { color: var(--cream); }
-.team-list { display: flex; flex-direction: column; gap: 0.7rem; }
-.tmember { display: flex; align-items: center; gap: 9px; }
-.tav {
-  width: 30px; height: 30px; border-radius: 50%;
-  font-size: 0.7rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; border: 1px solid rgba(245,240,232,0.15);
-}
-.tname { font-size: 0.8rem; color: var(--cream); }
-.trole { font-size: 0.68rem; color: rgba(245,240,232,0.45); }
-.footer-bottom {
-  border-top: 1px solid rgba(245,240,232,0.1);
-  padding-top: 1.3rem; display: flex; justify-content: space-between;
-  font-size: 0.75rem; color: rgba(245,240,232,0.35);
-}
-
-/* ── TOAST ── */
-#toast {
-  position: fixed; bottom: 1.5rem; right: 1.5rem;
-  background: var(--ink); color: var(--cream);
-  border-radius: 10px; padding: 0.9rem 1.2rem;
-  display: flex; align-items: center; gap: 9px;
-  font-size: 0.82rem; max-width: 300px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  transform: translateY(80px); opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  z-index: 999;
-}
-#toast.show { transform: translateY(0); opacity: 1; }
-#toast-title { font-weight: 600; }
-#toast-sub { color: rgba(245,240,232,0.6); font-size: 0.75rem; }
-
-/* ── RESPONSIVE ── */
-@media(max-width:900px){
-  .hero { grid-template-columns:1fr; gap:2.5rem; padding-top:40px; }
-  .cards-grid { grid-template-columns:1fr 1fr; }
-  .insights-layout { grid-template-columns:1fr; }
-  .footer-grid { grid-template-columns:1fr 1fr; gap:2rem; }
-  .parking-grid { grid-template-columns:1fr; }
-}
-@media(max-width:600px){
-  .nav-links { display:none; }
-  .hero-stats { gap:1.5rem; }
-  .cards-grid { grid-template-columns:1fr 1fr; }
-  .footer-grid { grid-template-columns:1fr; }
-  .banner-divider { display:none; }
-}
-</style>
-</head>
-<body>
-
-<!-- NAV -->
-<nav>
-  <a href="#home" class="logo">
-    <div class="logo-dot"></div>
-    Urban Nav
-  </a>
-  <ul class="nav-links">
-    <li><a href="#home">Home</a></li>
-    <li><a href="#mapSection">Route</a></li>
-    <li><a href="#parkingSection">Parking</a></li>
-    <li><a href="#insightsSection" class="nav-pill">Dashboard</a></li>
-  </ul>
-</nav>
-
-<!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-left">
-    <div class="hero-tag">AI-Powered Mobility</div>
-    <h1>Navigate cities<br>with <em>confidence</em></h1>
-    <p class="hero-desc">
-      Get real driving distances, traffic-adjusted travel times,
-      and smart departure windows for any two cities — powered by live road data and AI.
-    </p>
-    <div class="hero-stats">
-      <div class="stat-item">
-        <div class="stat-num">Real</div>
-        <div class="stat-label">Road Distances</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">Live</div>
-        <div class="stat-label">Traffic Model</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">AI</div>
-        <div class="stat-label">Departure Tips</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="form-card">
-    <h3>Plan your route</h3>
-    <div class="field">
-      <label>From</label>
-      <div class="field-wrap">
-        <span class="field-icon">📍</span>
-        <input type="text" id="srcInput" placeholder="e.g. Mumbai, Delhi, London…" />
-      </div>
-    </div>
-    <div class="field">
-      <label>To</label>
-      <div class="field-wrap">
-        <span class="field-icon">🏁</span>
-        <input type="text" id="dstInput" placeholder="e.g. Pune, Agra, Manchester…" />
-      </div>
-    </div>
-    <div class="field">
-      <label>Departure time</label>
-      <div class="field-wrap">
-        <span class="field-icon">🕐</span>
-        <input type="datetime-local" id="deptTime" />
-      </div>
-    </div>
-    <button class="btn-go" id="goBtn" onclick="predict()">Get Route &amp; Forecast</button>
-  </div>
-</section>
-
-<!-- MAP -->
-<section id="mapSection" style="padding-bottom:50px;">
-  <div class="sec-label">Route Map</div>
-  <h2>Live Route Display</h2>
-  <p class="sec-sub">Enter your cities above to see the route on the map.</p>
-
-  <div id="resultBanner">
-    <div class="banner-grid">
-      <div class="banner-item">
-        <div class="banner-lbl">Road Distance</div>
-        <div class="banner-val" id="bDist">—</div>
-        <div class="banner-note" id="bDistNote"></div>
-      </div>
-      <div class="banner-divider"></div>
-      <div class="banner-item">
-        <div class="banner-lbl">Base Drive Time</div>
-        <div class="banner-val" id="bBase">—</div>
-        <div class="banner-note">no traffic</div>
-      </div>
-      <div class="banner-divider"></div>
-      <div class="banner-item">
-        <div class="banner-lbl">With Traffic</div>
-        <div class="banner-val" id="bTraffic">—</div>
-        <div class="banner-note" id="bDelay"></div>
-      </div>
-      <div class="banner-divider"></div>
-      <div class="banner-item">
-        <div class="banner-lbl">Avg Speed</div>
-        <div class="banner-val" id="bSpeed">—</div>
-        <div class="banner-note">effective</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="map-box" id="mapBox">
-    <div class="map-placeholder" id="mapPlaceholder">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-        <circle cx="12" cy="9" r="2.5"/>
-      </svg>
-      <p>Your route will appear here</p>
-    </div>
-  </div>
-</section>
-
-
-<!-- PREDICTION CARDS -->
-<section id="predictSection">
-  <div class="sec-label">AI Analysis</div>
-  <h2>Traffic Forecast</h2>
-  <p class="sec-sub">AI-predicted conditions for your selected route and departure time.</p>
-
-  <p class="sec-sub" id="mlLine" style="font-size:0.8rem; display:none;"> </p>
-  <div id="aiTipBox"></div>
-  <div class="cards-grid">
-    <div class="pcard">
-      <div class="pcard-icon">🚦</div>
-      <div class="pcard-label">Traffic Level</div>
-      <div class="pcard-value" id="cTraffic">—</div>
-      <div class="pcard-sub" id="cTrafficSub">Run a route first</div>
-      <div class="pbar"><div class="pbar-fill" id="pTraffic" style="background:var(--amber)"></div></div>
-    </div>
-    <div class="pcard">
-      <div class="pcard-icon">⏰</div>
-      <div class="pcard-label">Best Departure</div>
-      <div class="pcard-value" id="cDepart" style="font-size:1.2rem">—</div>
-      <div class="pcard-sub" id="cDepartSub">Optimal window</div>
-      <div class="pbar"><div class="pbar-fill" id="pDepart" style="background:var(--sage)"></div></div>
-    </div>
-    <div class="pcard">
-      <div class="pcard-icon">🚗</div>
-      <div class="pcard-label">Travel Time</div>
-      <div class="pcard-value" id="cTime">—</div>
-      <div class="pcard-sub" id="cTimeSub">Including delays</div>
-      <div class="pbar"><div class="pbar-fill" id="pTime" style="background:var(--sky)"></div></div>
-    </div>
-    <div class="pcard">
-      <div class="pcard-icon">🅿️</div>
-      <div class="pcard-label">Parking Near Dest.</div>
-      <div class="pcard-value" id="cParking">—</div>
-      <div class="pcard-sub" id="cParkingSub">Availability estimate</div>
-      <div class="pbar"><div class="pbar-fill" id="pParking" style="background:var(--sage)"></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- PARKING -->
-<section id="parkingSection">
-  <div class="sec-label">Parking Intelligence</div>
-  <h2>Nearby Parking</h2>
-  <p class="sec-sub">AI-estimated availability at spots near your destination.</p>
-  <div class="parking-grid">
-    <div class="pspot">
-      <div class="pspot-header">
-        <div><div class="pspot-name">Central Plaza Garage</div><div class="pspot-type">Multi-level · 24 hrs</div></div>
-        <div class="badge badge-g">Good</div>
-      </div>
-      <div style="font-size:0.72rem;color:var(--bark);">Availability</div>
-      <div class="avail-num" id="pk1Num">78%</div>
-      <div class="avail-bar"><div class="avail-fill avail-g" id="pk1Bar" style="width:78%"></div></div>
-      <div class="pspot-meta">
-        <span>📍 0.3 km</span><span>🚶 4 min</span><span>₹40/hr</span>
-      </div>
-    </div>
-    <div class="pspot">
-      <div class="pspot-header">
-        <div><div class="pspot-name">Metro Mall Parking</div><div class="pspot-type">Open air · 6 AM–11 PM</div></div>
-        <div class="badge badge-y">Limited</div>
-      </div>
-      <div style="font-size:0.72rem;color:var(--bark);">Availability</div>
-      <div class="avail-num" id="pk2Num">42%</div>
-      <div class="avail-bar"><div class="avail-fill avail-y" id="pk2Bar" style="width:42%"></div></div>
-      <div class="pspot-meta">
-        <span>📍 0.7 km</span><span>🚶 9 min</span><span>₹25/hr</span>
-      </div>
-    </div>
-    <div class="pspot">
-      <div class="pspot-header">
-        <div><div class="pspot-name">Civic Centre Lot</div><div class="pspot-type">Surface · 8 AM–8 PM</div></div>
-        <div class="badge badge-r">Scarce</div>
-      </div>
-      <div style="font-size:0.72rem;color:var(--bark);">Availability</div>
-      <div class="avail-num" id="pk3Num">18%</div>
-      <div class="avail-bar"><div class="avail-fill avail-r" id="pk3Bar" style="width:18%"></div></div>
-      <div class="pspot-meta">
-        <span>📍 1.1 km</span><span>🚶 14 min</span><span>₹15/hr</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- INSIGHTS -->
-<section id="insightsSection">
-  <div class="sec-label">Traffic Analytics</div>
-  <h2>Traffic Insights</h2>
-  <p class="sec-sub">Hourly congestion patterns to help you choose the best travel window.</p>
-  <div class="insights-layout">
-    <div class="insight-list">
-      <div class="iitem">
-        <div class="iitem-icon">🔴</div>
-        <div><div class="iitem-label">Peak Hours</div><div class="iitem-val" id="iPeak">7–10 AM &amp; 4–8 PM</div></div>
-        <div class="iitem-right">Avoid</div>
-      </div>
-      <div class="iitem">
-        <div class="iitem-icon">🟢</div>
-        <div><div class="iitem-label">Low Traffic</div><div class="iitem-val" id="iLow">11 AM – 2 PM</div></div>
-        <div class="iitem-right">Best window</div>
-      </div>
-      <div class="iitem">
-        <div class="iitem-icon">⚠️</div>
-        <div><div class="iitem-label">Most Congested Segment</div><div class="iitem-val" id="iSeg">—</div></div>
-        <div class="iitem-right" id="iSegNote">—</div>
-      </div>
-      <div class="iitem">
-        <div class="iitem-icon">📊</div>
-        <div><div class="iitem-label">Avg Congestion Index</div><div class="iitem-val" id="iAvg">—</div></div>
-        <div class="iitem-right">Today</div>
-      </div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">Hourly Congestion <span>Today · All corridors</span></div>
-      <div class="bar-chart" id="barChart"></div>
-      <div class="chart-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--sage)"></div> Low</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Moderate</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Heavy</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-grid">
-    <div>
-      <div class="footer-logo"><div class="logo-dot"></div>Urban Nav</div>
-      <p class="footer-desc">AI-driven urban mobility platform helping commuters plan smarter trips using real road data and machine learning.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Features</h4>
-      <ul>
-        <li><a href="#">Smart Routing</a></li>
-        <li><a href="#">Traffic Prediction</a></li>
-        <li><a href="#">Parking AI</a></li>
-        <li><a href="#">Departure Optimizer</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Tech Stack</h4>
-      <ul>
-        <li><a href="#">Node.js + Express</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#">OSRM Routing</a></li>
-        <li><a href="#">OpenStreetMap</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Team</h4>
-      <div class="team-list">
-        <div class="tmember">
-          <div class="tav" style="background:#3a4a3a;">MI</div>
-          <div><div class="tname">Mihika Chaudhari</div><div class="trole">AI / ML</div></div>
-        </div>
-        <div class="tmember">
-          <div class="tav" style="background:#3a3a4a;">KA</div>
-          <div><div class="tname">Kshitij Atalkar</div><div class="trole">Backend</div></div>
-        </div>
-        <div class="tmember">
-          <div class="tav" style="background:#4a3a3a;">MC</div>
-          <div><div class="tname">Mihir Chaudhari </div><div class="trole">Frontend</div></div>
-        </div>
-        <div class="tmember">
-          <div class="tav" style="background:#3a4040;">PD</div>
-          <div><div class="tname">Prasad Dalavi</div><div class="trole">Data Science</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© 2025 Urban Nav · horizon 1.0</span>
-    <span></span>
-  </div>
-</footer>
-
-<!-- TOAST -->
-<div id="toast">
-  <div>
-    <div id="toast-title"></div>
-    <div id="toast-sub"></div>
-  </div>
-</div>
-
-<script>
-
-const API = "http://localhost:3001";
-
-async function geocode(place){
-  const r = await fetch(`${API}/api/geocode?q=${encodeURIComponent(place)}`);
-  return await r.json();
-}
-
-async function getRoute(s,d){
-  const r = await fetch(`${API}/api/route?srcLat=${s.lat}&srcLon=${s.lon}&dstLat=${d.lat}&dstLon=${d.lon}`);
-  return await r.json();
-}
-
-async function getAnalysis(src,dst,distKm,baseMins,hour,dayName){
-  const r = await fetch(`${API}/api/analyze`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({src,dst,distKm,baseMins,hour,dayName})
-  });
-  return await r.json();
-}
-
-async function getMlPrediction(hour,dayIndex,distance){
-  const r = await fetch(`${API}/predict-traffic?hour=${hour}&day=${dayIndex}&distance=${distance}`);
-
-  if(!r.ok){
-    throw new Error("ML prediction failed");
-  }
-
-  return await r.json();
-}
-
-
-async function predict(){
-
-  const src=document.getElementById("srcInput").value.trim();
-  const dst=document.getElementById("dstInput").value.trim();
-  const dept=document.getElementById("deptTime").value;
-  const btn=document.getElementById("goBtn");
-
-  if(!src || !dst){
-    alert("Enter both locations");
-    return;
-  }
-
-  btn.disabled=true;
-  btn.textContent="Processing...";
-
-  try{
-
-    const [sC,dC] = await Promise.all([
-      geocode(src),
-      geocode(dst)
-    ]);
-
-    const route = await getRoute(sC,dC);
-
-    const dt = dept ? new Date(dept) : new Date();
-    const hour = dt.getHours();
-    const dayName = dt.toLocaleDateString("en-US",{weekday:"long"});
-    const jsDay = dt.getDay();
-    const dayIdx = jsDay===0 ? 7 : jsDay;
-
-    const [ai,ml] = await Promise.all([
-      getAnalysis(src,dst,route.distanceKm,route.durationMin,hour,dayName),
-      getMlPrediction(hour,dayIdx,route.distanceKm)
-    ]);
-
-    renderAll(src,dst,sC,dC,route,ai);
-
-    /* ===== ML RESULT DISPLAY ===== */
-
-    if(ml && ml.traffic_prediction){
-
-      const prediction = parseInt(ml.traffic_prediction);
-
-      let level="Low";
-
-      if(prediction>4000) level="High";
-      else if(prediction>2000) level="Moderate";
-
-      const mlLine=document.getElementById("mlLine");
-
-      mlLine.innerHTML =
-      "Machine Learning Model: Random Forest (scikit-learn)<br>" +
-      "Predicted Vehicle Count: <b>"+prediction+"</b><br>" +
-      "Estimated Traffic Level: <b>"+level+"</b>";
-
-      mlLine.style.display="block";
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urban Nav — Smart City Navigation</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300;1,500&family=Outfit:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    btn.textContent="Update Route";
+    html {
+      scroll-behavior: smooth;
+    }
 
-  }
-  catch(e){
+    :root {
+      --sand: #f5f0e8;
+      --warm: #ede8de;
+      --cream: #faf8f4;
+      --stone: #c8bfb0;
+      --bark: #7a6a58;
+      --ink: #2a2420;
+      --rust: #c0562a;
+      --sage: #4a7c6a;
+      --sky: #2d6fa4;
+      --amber: #c08030;
+      --red: #c04040;
+      --r: 12px;
+    }
 
-    console.error(e);
-    alert("Error running route prediction. Check backend.");
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.6;
+    }
 
-    btn.textContent="Get Route & Forecast";
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--cream);
+      border-bottom: 1px solid var(--stone);
+      padding: 0 6%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  }
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--ink);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
 
-  btn.disabled=false;
-}
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--rust);
+      flex-shrink: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.875rem;
+      color: var(--bark);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--ink);
+    }
+
+    .nav-pill {
+      background: var(--ink);
+      color: var(--cream) !important;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 0.8rem !important;
+      transition: background 0.2s !important;
+    }
+
+    .nav-pill:hover {
+      background: var(--rust) !important;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 70px 6% 60px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 5rem;
+      align-items: center;
+      background: var(--cream);
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--rust);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-tag::before {
+      content: '';
+      width: 24px;
+      height: 2px;
+      background: var(--rust);
+    }
+
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--rust);
+    }
+
+    .hero-desc {
+      margin: 1.2rem 0 0;
+      color: var(--bark);
+      font-size: 0.95rem;
+      max-width: 440px;
+      line-height: 1.7;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .stat-item {
+      line-height: 1.2;
+    }
+
+    .stat-num {
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--bark);
+    }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: var(--sand);
+      border: 1px solid var(--stone);
+      border-radius: var(--r);
+      padding: 2rem;
+    }
+
+    .form-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 1.4rem;
+      color: var(--ink);
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--bark);
+      margin-bottom: 5px;
+    }
+
+    .field-wrap {
+      position: relative;
+    }
+
+    .field-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 12px 11px 36px;
+      background: var(--cream);
+      border: 1px solid var(--stone);
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus {
+      border-color: var(--bark);
+    }
+
+    .field input::placeholder {
+      color: var(--stone);
+    }
+
+    .btn-go {
+      width: 100%;
+      margin-top: 0.4rem;
+      padding: 13px;
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-go:hover {
+      background: var(--rust);
+    }
+
+    .btn-go:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ── SECTION COMMONS ── */
+    section {
+      padding: 70px 6%;
+    }
+
+    .sec-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--rust);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .sec-label::before {
+      content: '';
+      width: 20px;
+      height: 2px;
+      background: var(--rust);
+    }
+
+    h2 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.5rem, 2.5vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 0.4rem;
+    }
+
+    .sec-sub {
+      color: var(--bark);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── RESULT BANNER ── */
+    #resultBanner {
+      display: none;
+      background: var(--sand);
+      border: 1px solid var(--stone);
+      border-radius: var(--r);
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .banner-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .banner-item {
+      line-height: 1.2;
+    }
+
+    .banner-val {
+      font-family: 'Fraunces', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .banner-lbl {
+      font-size: 0.72rem;
+      color: var(--bark);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .banner-note {
+      font-size: 0.75rem;
+      color: var(--stone);
+      margin-top: 1px;
+    }
+
+    .banner-divider {
+      width: 1px;
+      height: 44px;
+      background: var(--stone);
+    }
+
+    /* ── MAP ── */
+    #mapSection {
+      background: var(--warm);
+    }
+
+    .map-box {
+      border-radius: var(--r);
+      overflow: hidden;
+      border: 1px solid var(--stone);
+      height: 420px;
+      background: var(--sand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-placeholder {
+      text-align: center;
+      color: var(--stone);
+    }
+
+    .map-placeholder svg {
+      display: block;
+      margin: 0 auto 12px;
+      opacity: 0.4;
+    }
+
+    .map-placeholder p {
+      font-size: 0.85rem;
+    }
+
+    /* ── PREDICTION CARDS ── */
+    #predictSection {
+      background: var(--cream);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .pcard {
+      background: var(--sand);
+      border: 1px solid var(--stone);
+      border-radius: var(--r);
+      padding: 1.4rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .pcard:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .pcard-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .pcard-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--bark);
+      margin-bottom: 4px;
+    }
+
+    .pcard-value {
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--ink);
+      margin-bottom: 3px;
+      transition: color 0.3s;
+    }
+
+    .pcard-sub {
+      font-size: 0.75rem;
+      color: var(--bark);
+    }
+
+    .pbar {
+      height: 3px;
+      background: var(--stone);
+      border-radius: 3px;
+      margin-top: 0.8rem;
+      overflow: hidden;
+    }
+
+    .pbar-fill {
+      height: 100%;
+      border-radius: 3px;
+      width: 0;
+      transition: width 1s ease;
+    }
+
+    /* ── PARKING ── */
+    #parkingSection {
+      background: var(--warm);
+    }
+
+    .parking-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .pspot {
+      background: var(--cream);
+      border: 1px solid var(--stone);
+      border-radius: var(--r);
+      padding: 1.4rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .pspot:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+    }
+
+    .pspot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .pspot-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+
+    .pspot-type {
+      font-size: 0.72rem;
+      color: var(--bark);
+      margin-top: 2px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .badge-g {
+      background: #e4f0ea;
+      color: var(--sage);
+    }
+
+    .badge-y {
+      background: #f5ecd8;
+      color: var(--amber);
+    }
+
+    .badge-r {
+      background: #f5e0e0;
+      color: var(--red);
+    }
+
+    .avail-num {
+      font-family: 'Fraunces', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .avail-bar {
+      height: 4px;
+      background: var(--stone);
+      border-radius: 4px;
+      margin: 6px 0 10px;
+      overflow: hidden;
+    }
+
+    .avail-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    .avail-g {
+      background: var(--sage);
+    }
+
+    .avail-y {
+      background: var(--amber);
+    }
+
+    .avail-r {
+      background: var(--red);
+    }
+
+    .pspot-meta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .pspot-meta span {
+      font-size: 0.75rem;
+      color: var(--bark);
+    }
+
+    /* ── INSIGHTS ── */
+    #insightsSection {
+      background: var(--cream);
+    }
+
+    .insights-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 2rem;
+    }
+
+    .insight-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .iitem {
+      background: var(--sand);
+      border: 1px solid var(--stone);
+      border-radius: var(--r);
+      padding: 1.1rem 1.3rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      transition: box-shadow 0.2s;
+    }
+
+    .iitem:hover {
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .iitem-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--warm);
+      border: 1px solid var(--stone);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .iitem-label {
+      font-size: 0.7rem;
+      color: var(--bark);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .iitem-val {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--ink);
+      margin-top: 1px;
+    }
+
+    .iitem-right {
+      margin-left: auto;
+      font-size: 0.72rem;
+      color: var(--bark);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Chart */
+    .chart-box {
+      background: var(--sand);
+      border: 1px solid var(--stone);
+      border-radius: var(--r);
+      padding: 1.5rem;
+    }
+
+    .chart-title {
+      font-family: 'Fraunces', serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 1.2rem;
+      color: var(--ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chart-title span {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      color: var(--bark);
+      font-weight: 400;
+    }
+
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 120px;
+    }
+
+    .bcol {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .bbar {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      transition: opacity 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .bbar:hover {
+      opacity: 1 !important;
+    }
+
+    .btime {
+      font-size: 0.58rem;
+      color: var(--bark);
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 1.2rem;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: var(--bark);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    /* AI Tip */
+    #aiTipBox {
+      display: none;
+      margin: 0 0 0;
+      background: #f0f5f0;
+      border: 1px solid #c8d8c8;
+      border-left: 3px solid var(--sage);
+      border-radius: var(--r);
+      padding: 1rem 1.3rem;
+      font-size: 0.875rem;
+      color: #3a5a4a;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--ink);
+      color: var(--sand);
+      padding: 60px 6% 30px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.1rem;
+      color: var(--cream);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-logo .logo-dot {
+      background: var(--rust);
+    }
+
+    .footer-desc {
+      font-size: 0.82rem;
+      color: rgba(245, 240, 232, 0.55);
+      line-height: 1.7;
+      max-width: 260px;
+    }
+
+    .footer-col h4 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(245, 240, 232, 0.4);
+      margin-bottom: 0.9rem;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col li {
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-col a {
+      font-size: 0.82rem;
+      color: rgba(245, 240, 232, 0.6);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-col a:hover {
+      color: var(--cream);
+    }
+
+    .team-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .tmember {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .tav {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid rgba(245, 240, 232, 0.15);
+    }
+
+    .tname {
+      font-size: 0.8rem;
+      color: var(--cream);
+    }
+
+    .trole {
+      font-size: 0.68rem;
+      color: rgba(245, 240, 232, 0.45);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(245, 240, 232, 0.1);
+      padding-top: 1.3rem;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: rgba(245, 240, 232, 0.35);
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--ink);
+      color: var(--cream);
+      border-radius: 10px;
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.82rem;
+      max-width: 300px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 999;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    #toast-title {
+      font-weight: 600;
+    }
+
+    #toast-sub {
+      color: rgba(245, 240, 232, 0.6);
+      font-size: 0.75rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        padding-top: 40px;
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .insights-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+      }
+
+      .parking-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width:600px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero-stats {
+        gap: 1.5rem;
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .banner-divider {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#home" class="logo">
+      <div class="logo-dot"></div>
+      Urban Nav
+    </a>
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#mapSection">Route</a></li>
+      <li><a href="#parkingSection">Parking</a></li>
+      <li><a href="#insightsSection" class="nav-pill">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-left">
+      <div class="hero-tag">AI-Powered Mobility</div>
+      <h1>Navigate cities<br>with <em>confidence</em></h1>
+      <p class="hero-desc">
+        Get real driving distances, traffic-adjusted travel times,
+        and smart departure windows for any two cities — powered by live road data and AI.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num">Real</div>
+          <div class="stat-label">Road Distances</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">Live</div>
+          <div class="stat-label">Traffic Model</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">AI</div>
+          <div class="stat-label">Departure Tips</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>Plan your route</h3>
+      <div class="field">
+        <label>From</label>
+        <div class="field-wrap">
+          <span class="field-icon">📍</span>
+          <input type="text" id="srcInput" placeholder="e.g. Mumbai, Delhi, London…" />
+        </div>
+      </div>
+      <div class="field">
+        <label>To</label>
+        <div class="field-wrap">
+          <span class="field-icon">🏁</span>
+          <input type="text" id="dstInput" placeholder="e.g. Pune, Agra, Manchester…" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Departure time</label>
+        <div class="field-wrap">
+          <span class="field-icon">🕐</span>
+          <input type="datetime-local" id="deptTime" />
+        </div>
+      </div>
+      <button class="btn-go" id="goBtn" onclick="predict()">Get Route &amp; Forecast</button>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section id="mapSection" style="padding-bottom:50px;">
+    <div class="sec-label">Route Map</div>
+    <h2>Live Route Display</h2>
+    <p class="sec-sub">Enter your cities above to see the route on the map.</p>
+
+    <div id="resultBanner">
+      <div class="banner-grid">
+        <div class="banner-item">
+          <div class="banner-lbl">Road Distance</div>
+          <div class="banner-val" id="bDist">—</div>
+          <div class="banner-note" id="bDistNote"></div>
+        </div>
+        <div class="banner-divider"></div>
+        <div class="banner-item">
+          <div class="banner-lbl">Base Drive Time</div>
+          <div class="banner-val" id="bBase">—</div>
+          <div class="banner-note">no traffic</div>
+        </div>
+        <div class="banner-divider"></div>
+        <div class="banner-item">
+          <div class="banner-lbl">With Traffic</div>
+          <div class="banner-val" id="bTraffic">—</div>
+          <div class="banner-note" id="bDelay"></div>
+        </div>
+        <div class="banner-divider"></div>
+        <div class="banner-item">
+          <div class="banner-lbl">Avg Speed</div>
+          <div class="banner-val" id="bSpeed">—</div>
+          <div class="banner-note">effective</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-box" id="mapBox">
+      <div class="map-placeholder" id="mapPlaceholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+          <circle cx="12" cy="9" r="2.5" />
+        </svg>
+        <p>Your route will appear here</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- PREDICTION CARDS -->
+  <section id="predictSection">
+    <div class="sec-label">AI Analysis</div>
+    <h2>Traffic Forecast</h2>
+    <p class="sec-sub">AI-predicted conditions for your selected route and departure time.</p>
+
+    <p class="sec-sub" id="mlLine" style="font-size:0.8rem; display:none;"> </p>
+    <div id="aiTipBox"></div>
+    <div class="cards-grid">
+      <div class="pcard">
+        <div class="pcard-icon">🚦</div>
+        <div class="pcard-label">Traffic Level</div>
+        <div class="pcard-value" id="cTraffic">—</div>
+        <div class="pcard-sub" id="cTrafficSub">Run a route first</div>
+        <div class="pbar">
+          <div class="pbar-fill" id="pTraffic" style="background:var(--amber)"></div>
+        </div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-icon">⏰</div>
+        <div class="pcard-label">Best Departure</div>
+        <div class="pcard-value" id="cDepart" style="font-size:1.2rem">—</div>
+        <div class="pcard-sub" id="cDepartSub">Optimal window</div>
+        <div class="pbar">
+          <div class="pbar-fill" id="pDepart" style="background:var(--sage)"></div>
+        </div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-icon">🚗</div>
+        <div class="pcard-label">Travel Time</div>
+        <div class="pcard-value" id="cTime">—</div>
+        <div class="pcard-sub" id="cTimeSub">Including delays</div>
+        <div class="pbar">
+          <div class="pbar-fill" id="pTime" style="background:var(--sky)"></div>
+        </div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-icon">🅿️</div>
+        <div class="pcard-label">Parking Near Dest.</div>
+        <div class="pcard-value" id="cParking">—</div>
+        <div class="pcard-sub" id="cParkingSub">Availability estimate</div>
+        <div class="pbar">
+          <div class="pbar-fill" id="pParking" style="background:var(--sage)"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARKING -->
+  <section id="parkingSection">
+    <div class="sec-label">Parking Intelligence</div>
+    <h2>Nearby Parking</h2>
+    <p class="sec-sub">AI-estimated availability at spots near your destination.</p>
+    <div class="parking-grid">
+      <div class="pspot">
+        <div class="pspot-header">
+          <div>
+            <div class="pspot-name">Central Plaza Garage</div>
+            <div class="pspot-type">Multi-level · 24 hrs</div>
+          </div>
+          <div class="badge badge-g">Good</div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--bark);">Availability</div>
+        <div class="avail-num" id="pk1Num">78%</div>
+        <div class="avail-bar">
+          <div class="avail-fill avail-g" id="pk1Bar" style="width:78%"></div>
+        </div>
+        <div class="pspot-meta">
+          <span>📍 0.3 km</span><span>🚶 4 min</span><span>₹40/hr</span>
+        </div>
+      </div>
+      <div class="pspot">
+        <div class="pspot-header">
+          <div>
+            <div class="pspot-name">Metro Mall Parking</div>
+            <div class="pspot-type">Open air · 6 AM–11 PM</div>
+          </div>
+          <div class="badge badge-y">Limited</div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--bark);">Availability</div>
+        <div class="avail-num" id="pk2Num">42%</div>
+        <div class="avail-bar">
+          <div class="avail-fill avail-y" id="pk2Bar" style="width:42%"></div>
+        </div>
+        <div class="pspot-meta">
+          <span>📍 0.7 km</span><span>🚶 9 min</span><span>₹25/hr</span>
+        </div>
+      </div>
+      <div class="pspot">
+        <div class="pspot-header">
+          <div>
+            <div class="pspot-name">Civic Centre Lot</div>
+            <div class="pspot-type">Surface · 8 AM–8 PM</div>
+          </div>
+          <div class="badge badge-r">Scarce</div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--bark);">Availability</div>
+        <div class="avail-num" id="pk3Num">18%</div>
+        <div class="avail-bar">
+          <div class="avail-fill avail-r" id="pk3Bar" style="width:18%"></div>
+        </div>
+        <div class="pspot-meta">
+          <span>📍 1.1 km</span><span>🚶 14 min</span><span>₹15/hr</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section id="insightsSection">
+    <div class="sec-label">Traffic Analytics</div>
+    <h2>Traffic Insights</h2>
+    <p class="sec-sub">Hourly congestion patterns to help you choose the best travel window.</p>
+    <div class="insights-layout">
+      <div class="insight-list">
+        <div class="iitem">
+          <div class="iitem-icon">🔴</div>
+          <div>
+            <div class="iitem-label">Peak Hours</div>
+            <div class="iitem-val" id="iPeak">7–10 AM &amp; 4–8 PM</div>
+          </div>
+          <div class="iitem-right">Avoid</div>
+        </div>
+        <div class="iitem">
+          <div class="iitem-icon">🟢</div>
+          <div>
+            <div class="iitem-label">Low Traffic</div>
+            <div class="iitem-val" id="iLow">11 AM – 2 PM</div>
+          </div>
+          <div class="iitem-right">Best window</div>
+        </div>
+        <div class="iitem">
+          <div class="iitem-icon">⚠️</div>
+          <div>
+            <div class="iitem-label">Most Congested Segment</div>
+            <div class="iitem-val" id="iSeg">—</div>
+          </div>
+          <div class="iitem-right" id="iSegNote">—</div>
+        </div>
+        <div class="iitem">
+          <div class="iitem-icon">📊</div>
+          <div>
+            <div class="iitem-label">Avg Congestion Index</div>
+            <div class="iitem-val" id="iAvg">—</div>
+          </div>
+          <div class="iitem-right">Today</div>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Hourly Congestion <span>Today · All corridors</span></div>
+        <div class="bar-chart" id="barChart"></div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--sage)"></div> Low
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--amber)"></div> Moderate
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--red)"></div> Heavy
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">
+          <div class="logo-dot"></div>Urban Nav
+        </div>
+        <p class="footer-desc">AI-driven urban mobility platform helping commuters plan smarter trips using real road
+          data and machine learning.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Features</h4>
+        <ul>
+          <li><a href="#">Smart Routing</a></li>
+          <li><a href="#">Traffic Prediction</a></li>
+          <li><a href="#">Parking AI</a></li>
+          <li><a href="#">Departure Optimizer</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Tech Stack</h4>
+        <ul>
+          <li><a href="#">Node.js + Express</a></li>
+          <li><a href="#"></a></li>
+          <li><a href="#">OSRM Routing</a></li>
+          <li><a href="#">OpenStreetMap</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Team</h4>
+        <div class="team-list">
+          <div class="tmember">
+            <div class="tav" style="background:#3a4a3a;">MI</div>
+            <div>
+              <div class="tname">Mihika Chaudhari</div>
+              <div class="trole">AI / ML</div>
+            </div>
+          </div>
+          <div class="tmember">
+            <div class="tav" style="background:#3a3a4a;">KA</div>
+            <div>
+              <div class="tname">Kshitij Atalkar</div>
+              <div class="trole">Backend</div>
+            </div>
+          </div>
+          <div class="tmember">
+            <div class="tav" style="background:#4a3a3a;">MC</div>
+            <div>
+              <div class="tname">Mihir Chaudhari </div>
+              <div class="trole">Frontend</div>
+            </div>
+          </div>
+          <div class="tmember">
+            <div class="tav" style="background:#3a4040;">PD</div>
+            <div>
+              <div class="tname">Prasad Dalavi</div>
+              <div class="trole">Data Science</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Urban Nav · horizon 1.0</span>
+      <span></span>
+    </div>
+  </footer>
+
+  <!-- TOAST -->
+  <div id="toast">
+    <div>
+      <div id="toast-title"></div>
+      <div id="toast-sub"></div>
+    </div>
+  </div>
+
+  <script>
+
+    const API = "http://localhost:3001";
+
+    async function geocode(place) {
+      const r = await fetch(`${API}/api/geocode?q=${encodeURIComponent(place)}`);
+      return await r.json();
+    }
+
+    async function getRoute(s, d) {
+      const r = await fetch(`${API}/api/route?srcLat=${s.lat}&srcLon=${s.lon}&dstLat=${d.lat}&dstLon=${d.lon}`);
+      return await r.json();
+    }
+
+    async function getAnalysis(src, dst, distKm, baseMins, hour, dayName) {
+      const r = await fetch(`${API}/api/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ src, dst, distKm, baseMins, hour, dayName })
+      });
+      return await r.json();
+    }
+
+    async function getMlPrediction(hour, dayIndex, distance, src, dst) {
+      const r = await fetch(`${API}/predict-traffic?hour=${hour}&day=${dayIndex}&distance=${distance}&src=${encodeURIComponent(src)}&dst=${encodeURIComponent(dst)}`);
+
+      if (!r.ok) {
+        throw new Error("ML prediction failed");
+      }
+
+      return await r.json();
+    }
+
+
+    async function predict() {
+
+      const src = document.getElementById("srcInput").value.trim();
+      const dst = document.getElementById("dstInput").value.trim();
+      const dept = document.getElementById("deptTime").value;
+      const btn = document.getElementById("goBtn");
+
+      if (!src || !dst) {
+        alert("Enter both locations");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+
+      try {
+
+        const [sC, dC] = await Promise.all([
+          geocode(src),
+          geocode(dst)
+        ]);
+
+        const route = await getRoute(sC, dC);
+
+        const dt = dept ? new Date(dept) : new Date();
+        const hour = dt.getHours();
+        const dayName = dt.toLocaleDateString("en-US", { weekday: "long" });
+        const jsDay = dt.getDay();
+        const dayIdx = jsDay === 0 ? 7 : jsDay;
+
+        const [ai, ml] = await Promise.all([
+          getAnalysis(src, dst, route.distanceKm, route.durationMin, hour, dayName),
+          getMlPrediction(hour, dayIdx, route.distanceKm, src, dst)
+        ]);
+
+        renderAll(src, dst, sC, dC, route, ai);
+
+        /* ===== ML RESULT DISPLAY ===== */
+
+        if (ml && ml.traffic_prediction) {
+
+          const prediction = parseInt(ml.traffic_prediction);
+
+          let level = "Low";
+
+          if (prediction > 4000) level = "High";
+          else if (prediction > 2000) level = "Moderate";
+
+          const mlLine = document.getElementById("mlLine");
+
+          mlLine.innerHTML =
+            "Machine Learning Model: LSTM Neural Network (Kaggle Dataset)<br>" +
+            "Predicted Vehicle Count: <b>" + prediction + "</b><br>" +
+            "Estimated Traffic Level: <b>" + level + "</b>";
+
+          mlLine.style.display = "block";
+
+        }
+
+        btn.textContent = "Update Route";
+
+      }
+      catch (e) {
+
+        console.error(e);
+        alert("Error running route prediction. Check backend.");
+
+        btn.textContent = "Get Route & Forecast";
+
+      }
+
+      btn.disabled = false;
+    }
 
 
 
-function renderAll(src,dst,sC,dC,route,ai){
+    function renderAll(src, dst, sC, dC, route, ai) {
 
-  document.getElementById("bDist").innerText = route.distanceKm+" km";
-  document.getElementById("bBase").innerText = route.durationMin+" min";
-  document.getElementById("bTraffic").innerText = ai.totalTravelMinutes+" min";
-  document.getElementById("bDelay").innerText = "+"+ai.delayMinutes+" min delay";
+      document.getElementById("bDist").innerText = route.distanceKm + " km";
+      document.getElementById("bBase").innerText = route.durationMin + " min";
+      document.getElementById("bTraffic").innerText = ai.totalTravelMinutes + " min";
+      document.getElementById("bDelay").innerText = "+" + ai.delayMinutes + " min delay";
 
-  document.getElementById("cTraffic").innerText = ai.trafficEmoji+" "+ai.trafficLevel;
-  document.getElementById("cDepart").innerText = ai.bestDepartureLabel;
-  document.getElementById("cTime").innerText = ai.totalTravelMinutes+" min";
-  document.getElementById("cParking").innerText = ai.parkingAvailability+"%";
+      document.getElementById("cTraffic").innerText = ai.trafficEmoji + " " + ai.trafficLevel;
+      document.getElementById("cDepart").innerText = ai.bestDepartureLabel;
+      document.getElementById("cTime").innerText = ai.totalTravelMinutes + " min";
+      document.getElementById("cParking").innerText = ai.parkingAvailability + "%";
 
-  document.getElementById("cTrafficSub").innerText = ai.congestionReason;
-  document.getElementById("cDepartSub").innerText = "Save "+ai.timeSavedMinutes+" min";
-  document.getElementById("cTimeSub").innerText = "Including delay";
-  document.getElementById("cParkingSub").innerText = ai.parkingStatus;
+      document.getElementById("cTrafficSub").innerText = ai.congestionReason;
+      document.getElementById("cDepartSub").innerText = "Save " + ai.timeSavedMinutes + " min";
+      document.getElementById("cTimeSub").innerText = "Including delay";
+      document.getElementById("cParkingSub").innerText = ai.parkingStatus;
 
-  document.getElementById("aiTipBox").innerText = "💡 "+ai.aiTip;
-  document.getElementById("aiTipBox").style.display="block";
+      document.getElementById("aiTipBox").innerText = "💡 " + ai.aiTip;
+      document.getElementById("aiTipBox").style.display = "block";
 
-  document.getElementById("iPeak").innerText = ai.peakHours;
-  document.getElementById("iLow").innerText = ai.lowTrafficWindow;
-  document.getElementById("iSeg").innerText = ai.mostCongestedSegment;
-  document.getElementById("iAvg").innerText = ai.avgCongestionIndex;
+      document.getElementById("iPeak").innerText = ai.peakHours;
+      document.getElementById("iLow").innerText = ai.lowTrafficWindow;
+      document.getElementById("iSeg").innerText = ai.mostCongestedSegment;
+      document.getElementById("iAvg").innerText = ai.avgCongestionIndex;
 
-  const mapBox=document.getElementById("mapBox");
+      const mapBox = document.getElementById("mapBox");
 
-  mapBox.innerHTML = `<iframe
+      mapBox.innerHTML = `<iframe
   src="https://maps.google.com/maps?saddr=${encodeURIComponent(src)}&daddr=${encodeURIComponent(dst)}&output=embed"
   width="100%" height="100%" style="border:0"></iframe>`;
 
-}
+    }
 
 
 
-function initTime(){
-  const n = new Date();
-  n.setMinutes(0,0,0);
-  n.setHours(n.getHours()+1);
-  document.getElementById("deptTime").value = n.toISOString().slice(0,16);
-}
+    function initTime() {
+      const n = new Date();
+      n.setMinutes(0, 0, 0);
+      n.setHours(n.getHours() + 1);
+      document.getElementById("deptTime").value = n.toISOString().slice(0, 16);
+    }
 
-initTime();
+    initTime();
 
-</script>
+  </script>
 </body>
+
 </html>
